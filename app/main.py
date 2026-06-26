@@ -11,7 +11,7 @@ Prefijo de rutas: /api/estadisticas
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from .auth import usuario_actual
@@ -46,6 +46,22 @@ app.add_middleware(
 #   - readiness: ¿está listo para recibir tráfico? Debe verificar la BD.
 # Luego configurar livenessProbe/readinessProbe en el Deployment de EKS.
 
+@app.get("/healthz")
+def liveness():
+    """Sonda Liveness revisa si el FastAPI esta vivo o esta tieso"""
+    return {"status": "alive"}
+
+@app.get("/readyz")
+def readiness(response: Response):
+    """Sonda readiness revisa si hay conexion"""
+    from .db import ping
+
+    if ping():
+        return {"status": "ready"}
+    else:
+        # Si la base de datos está caída, respondemos con un 503
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "database_disconnected"}
 
 @app.get("/api/estadisticas/mias")
 def mis_estadisticas(usuario: dict = Depends(usuario_actual)):
