@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estadisticas-service-deployment
+  namespace: default
+  labels:
+    app: estadisticas-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: estadisticas-service
+  template:
+    metadata:
+      labels:
+        app: estadisticas-service
+    spec:
+      containers:
+      - name: estadisticas-service
+        image: estadisticas-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8006
+        resources:
+          requests:
+            cpu: "100m"
