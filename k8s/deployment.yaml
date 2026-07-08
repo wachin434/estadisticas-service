@@ -16,11 +16,38 @@ spec:
         app: estadisticas-service
     spec:
       containers:
-      - name: estadisticas-service
-        image: estadisticas-service:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8006
-        resources:
-          requests:
-            cpu: "100m"
+        - name: estadisticas-service
+          image: estadisticas-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8006
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: estadisticas-secrets
+                  key: database_url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: estadisticas-secrets
+                  key: jwt_secret
+          livenessProbe:
+            httpGet:
+              path: /api/estadisticas/health
+              port: 8006
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/estadisticas/health
+              port: 8006
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
